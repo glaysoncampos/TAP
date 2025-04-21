@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAP Generator - Coren-Goiás</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .coren-blue {
+            background-color: #1e3a8a;
+        }
+        
+        .coren-light-blue {
+            background-color: #3b82f6;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .question-card {
+            transition: all 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        
+        .question-card.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .floating-btn {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="coren-blue text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+      
+                    <h1 class="text-2xl font-bold">TAP Generator - COREN - GO</h1>
+                </div>
+                <div class="hidden md:block">
+                    <p class="text-sm">Ferramenta de auxílio para elaboração de Termos de Abertura de Projeto</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Progress Bar -->
+        <div class="mb-8 bg-gray-200 rounded-full h-4">
+            <div id="progress-bar" class="progress-bar coren-light-blue h-4 rounded-full" style="width: 0%"></div>
+        </div>
+        
+        <!-- Form Container -->
+        <div id="form-container" class="bg-white rounded-lg shadow-xl p-6 mb-8">
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="text-center fade-in">
+                <div class="mb-8">
+                    <i class="fas fa-file-alt text-6xl coren-blue text-white p-4 rounded-full"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Bem-vindo ao TAP Generator</h2>
+                <p class="text-gray-600 mb-6">Esta ferramenta irá guiá-lo passo a passo na criação do Termo de Abertura de Projeto (TAP) para o Coren-Goiás.</p>
+                <p class="text-gray-600 mb-8">Responda às perguntas abaixo para gerar seu documento automaticamente.</p>
+                <button onclick="startForm()" class="coren-blue hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105">
+                    Começar <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+            
+            <!-- Questions will be inserted here dynamically -->
+        </div>
+        
+        <!-- Navigation Buttons -->
+        <div id="nav-buttons" class="flex justify-between hidden">
+            <button id="prev-btn" onclick="prevQuestion()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                <i class="fas fa-arrow-left mr-2"></i> Anterior
+            </button>
+            <button id="next-btn" onclick="nextQuestion()" class="coren-blue hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Próximo <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+            <button id="finish-btn" onclick="showPreview()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 hidden">
+                Finalizar <i class="fas fa-check ml-2"></i>
+            </button>
+        </div>
+    </main>
+    
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-11/12 max-w-4xl max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center border-b p-4 coren-blue text-white">
+                <h3 class="text-xl font-bold">Pré-visualização do TAP</h3>
+                <button onclick="closePreview()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="preview-content" class="p-6 text-gray-800 whitespace-pre-line"></div>
+            <div class="flex justify-end p-4 border-t">
+                <button onclick="closePreview()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg mr-4">
+                    Voltar
+                </button>
+                <button onclick="exportTAP()" class="coren-blue hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i> Exportar TAP
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success Toast -->
+    <div id="success-toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center hidden">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span>TAP exportado com sucesso!</span>
+    </div>
+
+    <script>
+        // Questions data
+        const questions = [
+            {
+                title: "Nome do Projeto",
+                question: "Qual será o nome do projeto?",
+                example: "Implementação do Sistema de Gestão Eletrônica de Documentos (GED) no COREN-GO.",
+                key: "projectName"
+            },
+            {
+                title: "Patrocinador do Projeto",
+                question: "Quem é o Patrocinador(a) do projeto (pessoa que autoriza e provê os recursos iniciais)? Informe nome e cargo.",
+                example: "Drª Thais Luane, [Cargo].",
+                key: "projectSponsor"
+            },
+            {
+                title: "Gerente do Projeto e Autoridade",
+                questions: [
+                    {
+                        question: "Quem será o(a) Gerente do Projeto responsável pela condução diária? Informe nome e cargo.",
+                        example: "Joana Silva, Chefe da Divisão de Protocolo e Arquivo.",
+                        key: "projectManager"
+                    },
+                    {
+                        question: "Qual o nível de autoridade do(a) Gerente de Projeto (ex: gerenciar orçamento até X valor, requisitar recursos da equipe Y, aprovar pequenas mudanças de escopo)?",
+                        example: "Gerenciar orçamento alocado, requisitar membros da equipe de TI previamente definidos, reportar mudanças de escopo ao Gerente do Programa, Patrocinador. etc.",
+                        key: "managerAuthority"
+                    }
+                ],
+                key: "projectManagerSection"
+            },
+            {
+                title: "Justificativa / Necessidade do Negócio",
+                question: "Por que este projeto é necessário? Qual problema, oportunidade ou requisito de negócio ele aborda?",
+                example: "O atual processo manual de gestão documental causa lentidão (média de X horas para localizar um documento), risco de perda de informação e ocupa espaço físico excessivo. O projeto atende à necessidade de modernização e eficiência.",
+                key: "businessNeed"
+            },
+            {
+                title: "Descrição e Escopo de Alto Nível",
+                question: "Descreva o projeto: O que será feito? Quais são os principais limites (o que não será feito)?",
+                example: "Implementar um sistema GED para digitalização, indexação, armazenamento e busca de documentos da área X e Y do COREN-GO. Inclui aquisição de software/hardware, configuração, migração de dados históricos (últimos Z anos) e treinamento. Não inclui a digitalização de documentos da área contábil nesta fase.",
+                key: "projectScope"
+            },
+            {
+                title: "Objetivos Mensuráveis e Critérios de Sucesso",
+                questions: [
+                    {
+                        question: "Quais são os objetivos mensuráveis do projeto? (Use o formato SMART se possível)",
+                        example: "1. Reduzir o tempo médio de recuperação de documentos em 50% em até 3 meses após a implantação. 2. Digitalizar 100% do acervo ativo das áreas X e Y em 6 meses. 3. Alcançar um índice de satisfação dos usuários do sistema de 80% na primeira avaliação pós-implantação.",
+                        key: "measurableObjectives"
+                    },
+                    {
+                        question: "Como o sucesso do projeto será medido e confirmado? (Critérios de Sucesso)",
+                        example: "Sucesso medido por relatórios de tempo do sistema, auditoria do acervo digitalizado e pesquisa de satisfação. Aprovação final pelo Patrocinador após demonstração dos objetivos alcançados.",
+                        key: "successCriteria"
+                    }
+                ],
+                key: "objectivesSection"
+            },
+            {
+                title: "Requisitos de Alto Nível",
+                question: "Quais são as principais necessidades ou funcionalidades que o resultado do projeto deve atender?",
+                example: "Sistema deve permitir busca por palavra-chave, controle de versão de documentos, perfis de acesso por usuário/grupo, e integração com sistema de login atual (se aplicável).",
+                key: "highLevelRequirements"
+            },
+            {
+                title: "Entregas Principais",
+                question: "Quais serão os principais produtos, serviços ou resultados gerados pelo projeto?",
+                example: "1. Software GED configurado e implantado. 2. Acervo das áreas X e Y digitalizado e indexado. 3. Equipe treinada. 4. Manuais de usuário e administrador.",
+                key: "mainDeliverables"
+            },
+            {
+                title: "Partes Interessadas Chave",
+                question: "Liste as principais partes interessadas (pessoas, grupos ou entidades) impactadas ou com interesse no projeto.",
+                example: "Diretoria do COREN-GO, Divisão de Protocolo e Arquivo, Departamento de TI, Servidores usuários das áreas atendimento e protocolo, Empresa fornecedora do GED.",
+                key: "keyStakeholders"
+            },
+            {
+                title: "Premissas e Restrições",
+                questions: [
+                    {
+                        question: "Quais são as premissas do projeto (fatores considerados verdadeiros para o planejamento)?",
+                        example: "Disponibilidade da equipe de TI conforme planejado; Orçamento aprovado será liberado nas datas previstas; Requisitos não sofrerão alterações significativas após a fase de análise.",
+                        key: "assumptions"
+                    },
+                    {
+                        question: "Quais são as restrições conhecidas (limitações de prazo, orçamento, recursos, escopo, etc.)?",
+                        example: "Prazo máximo de 6 meses para implantação; Orçamento total não pode exceder R$ 100.000,00; Equipe dedicada limitada a 3 pessoas da TI e 2 da área de arquivo.",
+                        key: "constraints"
+                    }
+                ],
+                key: "assumptionsSection"
+            },
+            {
+                title: "Riscos de Alto Nível",
+                question: "Quais são os principais riscos (ameaças ou oportunidades) identificados neste momento inicial?",
+                example: "Ameaças: Resistência dos usuários à mudança; Atraso na entrega do fornecedor; Incompatibilidade técnica com infraestrutura existente. Oportunidade: Possibilidade de expandir o sistema para outras áreas no futuro com custo reduzido.",
+                key: "highLevelRisks"
+            },
+            {
+                title: "Cronograma de Marcos Principais",
+                question: "Quais são os marcos principais do projeto e suas datas ou durações estimadas?",
+                example: "Início: 01/05/2025; Conclusão da Análise: 31/05/2025; Conclusão do Desenvolvimento/Configuração: 31/08/2025; Início da Implantação: 01/10/2025; Go-live: 31/10/2025.",
+                key: "milestoneSchedule"
+            },
+            {
+                title: "Orçamento Sumário / Recursos Financeiros",
+                question: "Qual o orçamento sumário aprovado ou estimado para o projeto?",
+                example: "R$ 100.000,00 (R$ 40.000 para Software/Licenças, R$ 20.000 para Hardware/Scanner, R$ 30.000 para Serviços de Configuração/Migração, R$ 10.000 para Treinamento).",
+                key: "summaryBudget"
+            }
+        ];
+
+        // User responses
+        let responses = {};
+        let currentQuestionIndex = -1;
+        let totalQuestions = calculateTotalQuestions();
+
+        // Calculate total questions (including sub-questions)
+        function calculateTotalQuestions() {
+            let count = 0;
+            questions.forEach(q => {
+                if (q.questions) {
+                    count += q.questions.length;
+                } else {
+                    count += 1;
+                }
+            });
+            return count;
+        }
+
+        // Start the form
+        function startForm() {
+            currentQuestionIndex = 0;
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('nav-buttons').classList.remove('hidden');
+            showQuestion(currentQuestionIndex);
+            updateProgressBar();
+        }
+
+        // Show question
+        function showQuestion(index) {
+            const formContainer = document.getElementById('form-container');
+            formContainer.innerHTML = '';
+            
+            let questionData;
+            let questionNumber = 0;
+            let found = false;
+            
+            // Find the question at the given index
+            for (let i = 0; i < questions.length && !found; i++) {
+                if (questions[i].questions) {
+                    if (index < questionNumber + questions[i].questions.length) {
+                        questionData = {
+                            title: questions[i].title,
+                            ...questions[i].questions[index - questionNumber]
+                        };
+                        found = true;
+                    }
+                    questionNumber += questions[i].questions.length;
+                } else {
+                    if (index === questionNumber) {
+                        questionData = questions[i];
+                        found = true;
+                    }
+                    questionNumber += 1;
+                }
+            }
+            
+            if (!found) return;
+            
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card active';
+            questionCard.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">${questionData.title}</h2>
+                <p class="text-lg text-gray-700 mb-6">${questionData.question}</p>
+                
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-lightbulb text-blue-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                <strong>Exemplo:</strong> ${questionData.example}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="answer" class="block text-sm font-medium text-gray-700 mb-2">Sua resposta:</label>
+                    <textarea 
+                        id="answer" 
+                        rows="4" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                        placeholder="Digite sua resposta aqui...">${responses[questionData.key] || ''}</textarea>
+                </div>
+            `;
+            
+            formContainer.appendChild(questionCard);
+            
+            // Update navigation buttons
+            updateNavButtons();
+        }
+
+        // Update navigation buttons
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === totalQuestions - 1) {
+                nextBtn.classList.add('hidden');
+                finishBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                finishBtn.classList.add('hidden');
+            }
+        }
+
+        // Next question
+        function nextQuestion() {
+            saveCurrentAnswer();
+            currentQuestionIndex++;
+            showQuestion(currentQuestionIndex);
+            updateProgressBar();
+        }
+
+        // Previous question
+        function prevQuestion() {
+            saveCurrentAnswer();
+            currentQuestionIndex--;
+            showQuestion(currentQuestionIndex);
+            updateProgressBar();
+        }
+
+        // Save current answer
+        function saveCurrentAnswer() {
+            const answerTextarea = document.getElementById('answer');
+            if (!answerTextarea) return;
+            
+            let questionData;
+            let questionNumber = 0;
+            let found = false;
+            
+            // Find the question at the current index
+            for (let i = 0; i < questions.length && !found; i++) {
+                if (questions[i].questions) {
+                    if (currentQuestionIndex < questionNumber + questions[i].questions.length) {
+                        questionData = questions[i].questions[currentQuestionIndex - questionNumber];
+                        found = true;
+                    }
+                    questionNumber += questions[i].questions.length;
+                } else {
+                    if (currentQuestionIndex === questionNumber) {
+                        questionData = questions[i];
+                        found = true;
+                    }
+                    questionNumber += 1;
+                }
+            }
+            
+            if (found && questionData) {
+                responses[questionData.key] = answerTextarea.value;
+            }
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        // Show preview
+        function showPreview() {
+            saveCurrentAnswer();
+            
+            // Generate preview content
+            let previewContent = '';
+            
+            previewContent += `Nome do Projeto: ${responses.projectName || ''}\n\n`;
+            previewContent += `Patrocinador do Projeto: ${responses.projectSponsor || ''}\n\n`;
+            previewContent += `Gerente do Projeto e Autoridade: ${responses.projectManager || ''}\n${responses.managerAuthority || ''}\n\n`;
+            previewContent += `Justificativa / Necessidade do Negócio: ${responses.businessNeed || ''}\n\n`;
+            previewContent += `Descrição e Escopo de Alto Nível: ${responses.projectScope || ''}\n\n`;
+            previewContent += `Objetivos Mensuráveis e Critérios de Sucesso: ${responses.measurableObjectives || ''}\n${responses.successCriteria || ''}\n\n`;
+            previewContent += `Requisitos de Alto Nível: ${responses.highLevelRequirements || ''}\n\n`;
+            previewContent += `Entregas Principais: ${responses.mainDeliverables || ''}\n\n`;
+            previewContent += `Partes Interessadas Chave: ${responses.keyStakeholders || ''}\n\n`;
+            previewContent += `Premissas e Restrições: ${responses.assumptions || ''}\n${responses.constraints || ''}\n\n`;
+            previewContent += `Riscos de Alto Nível: ${responses.highLevelRisks || ''}\n\n`;
+            previewContent += `Cronograma de Marcos Principais: ${responses.milestoneSchedule || ''}\n\n`;
+            previewContent += `Orçamento Sumário / Recursos Financeiros: ${responses.summaryBudget || ''}\n`;
+            
+            document.getElementById('preview-content').textContent = previewContent;
+            document.getElementById('preview-modal').classList.remove('hidden');
+        }
+
+        // Close preview
+        function closePreview() {
+            document.getElementById('preview-modal').classList.add('hidden');
+        }
+
+        // Export TAP
+        function exportTAP() {
+            let tapContent = '';
+            
+            tapContent += `Nome do Projeto: ${responses.projectName || ''}\n\n`;
+            tapContent += `Patrocinador do Projeto: ${responses.projectSponsor || ''}\n\n`;
+            tapContent += `Gerente do Projeto e Autoridade: ${responses.projectManager || ''}\n${responses.managerAuthority || ''}\n\n`;
+            tapContent += `Justificativa / Necessidade do Negócio: ${responses.businessNeed || ''}\n\n`;
+            tapContent += `Descrição e Escopo de Alto Nível: ${responses.projectScope || ''}\n\n`;
+            tapContent += `Objetivos Mensuráveis e Critérios de Sucesso: ${responses.measurableObjectives || ''}\n${responses.successCriteria || ''}\n\n`;
+            tapContent += `Requisitos de Alto Nível: ${responses.highLevelRequirements || ''}\n\n`;
+            tapContent += `Entregas Principais: ${responses.mainDeliverables || ''}\n\n`;
+            tapContent += `Partes Interessadas Chave: ${responses.keyStakeholders || ''}\n\n`;
+            tapContent += `Premissas e Restrições: ${responses.assumptions || ''}\n${responses.constraints || ''}\n\n`;
+            tapContent += `Riscos de Alto Nível: ${responses.highLevelRisks || ''}\n\n`;
+            tapContent += `Cronograma de Marcos Principais: ${responses.milestoneSchedule || ''}\n\n`;
+            tapContent += `Orçamento Sumário / Recursos Financeiros: ${responses.summaryBudget || ''}\n`;
+            
+            // Create a blob and download it
+            const blob = new Blob([tapContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TAP_${responses.projectName || 'Projeto'}.txt`.replace(/[^a-zA-Z0-9_]/g, '_');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show success toast
+            const toast = document.getElementById('success-toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+            
+            closePreview();
+        }
+    </script>
+</body>
+</html
